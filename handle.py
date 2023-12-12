@@ -47,8 +47,13 @@ def handler(input: dict, context: object) -> dict[str, any]:
         stats[cpu_key].append({'usage':cpu_usage, 'time':input['timestamp']})
 
     cached_percent = input['virtual_memory-cached'] /  (input['virtual_memory-cached']+ input['virtual_memory-buffers'] ) * 100
-    outgoing_traffic = input['net_io_counters_eth0-bytes_sent']/(sum(stat['sent'] for stat in output_stats)/len(output_stats))*100
-    output_stats.append({'sent':input['net_io_counters_eth0-bytes_sent'], 'time': input['timestamp']})
+
+    outgoing_traffic = None
+    if not output_stats:
+        outgoing_traffic = 100
+    else:
+        outgoing_traffic = (input['net_io_counters_eth0-bytes_sent']/(1024**2)/sum(stat['sent'] for stat in output_stats)) * 100
+    output_stats.append({'sent':input['net_io_counters_eth0-bytes_sent']/(1024**2), 'time': input['timestamp']})
 
 
     response = {'cached_percent': cached_percent, 'outgoing_traffic': outgoing_traffic, 'outputs':output_stats,'virtual_memory_used': input['virtual_memory-used']/input['virtual_memory-total']}
